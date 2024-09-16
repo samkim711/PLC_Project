@@ -5,6 +5,7 @@ public final class ParseException extends RuntimeException {
         super(message);
         this.index = index;
     }
+
     public int getIndex() {
         return index;
     }
