@@ -32,8 +32,8 @@ public final class Lexer {
         List<Token> tokens = new ArrayList<>();
         while (chars.has(0)) {
 
-            while (chars.has(0) && peek(" ")) {
-                match(" ");
+            while (chars.has(0) && peek("[ \b\n\r\t]")) {
+                match("[ \b\n\r\t]");
                 chars.skip();
             }
             // If there's still input left, lex the next token
@@ -87,24 +87,36 @@ public final class Lexer {
      * negative values.
      */
     public Token lexNumber() {
-        if (peek("[+-]"))
+        int leadingSymbolIncrement = 0;
+        if (peek("[+-]")){
             match("[+-]");
-
-        boolean startZero = false;
-        if (peek("0")) {
-            peek("0");
-            startZero = true;
+            leadingSymbolIncrement = 1;
+            if (!peek("[0-9]"))
+                return chars.emit(Token.Type.OPERATOR);
         }
 
-        // Integer part
+        // Check if the next character is a digit
         if (!peek("[0-9]")) {
             throw new ParseException("Expected digit", chars.index);
         }
-        while (peek("[1-9]")) {
-            match("[1-9]");
+
+        // Check for leading zero
+        boolean startZero = peek("0");
+
+        // Integer part
+        while (peek("[0-9]")) {
+            match("[0-9]");
         }
 
-        // Check for decimal point
+        // If number has leading zero and is more than one digit, throw exception
+        if (startZero && chars.length - leadingSymbolIncrement > 1) {
+            throw new ParseException("Leading zeros are not allowed", chars.index - chars.length);
+        }
+        if (startZero && leadingSymbolIncrement==1 && chars.length - leadingSymbolIncrement == 1) {
+            throw new ParseException("+0 and -0 are not valid integers", chars.index - chars.length - leadingSymbolIncrement);
+        }
+
+        // Check for decimal point and fractional part
         if (peek("\\.")) {
             match("\\.");
             if (!peek("[0-9]")) {
@@ -115,8 +127,7 @@ public final class Lexer {
             }
             return chars.emit(Token.Type.DECIMAL);
         }
-        if (startZero)
-            throw new ParseException("Starting Zero not allowed", chars.index);
+
         return chars.emit(Token.Type.INTEGER);
     }
 
