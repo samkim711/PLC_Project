@@ -109,21 +109,21 @@ public class LexerTests {
 
     private static Stream<Arguments> testExamples() {
         return Stream.of(
-                Arguments.of("Example 1", "LET x = 5;", Arrays.asList(
+                Arguments.of("Example 1", "LET x = -5;", Arrays.asList(
                         new Token(Token.Type.IDENTIFIER, "LET", 0),
                         new Token(Token.Type.IDENTIFIER, "x", 4),
                         new Token(Token.Type.OPERATOR, "=", 6),
-                        new Token(Token.Type.INTEGER, "5", 8),
-                        new Token(Token.Type.OPERATOR, ";", 9)
+                        new Token(Token.Type.INTEGER, "-5", 8),
+                        new Token(Token.Type.OPERATOR, ";", 10)
                 )),
-                Arguments.of("Example 2", "print(\"Hello, World!\");",
-                        Arrays.asList(
+                Arguments.of("Example 2", "print(\"Hello, World!\");", Arrays.asList(
                                 new Token(Token.Type.IDENTIFIER, "print", 0),
                                 new Token(Token.Type.OPERATOR, "(", 5),
                                 new Token(Token.Type.STRING, "\"Hello, World!\"", 6),
                                 new Token(Token.Type.OPERATOR, ")", 21),
                                 new Token(Token.Type.OPERATOR, ";", 22)
-                        ))
+                )),
+                Arguments.of("Example 3", "\b\n\r\t", Arrays.asList())
         );
     }
 
