@@ -87,9 +87,6 @@ public final class Lexer {
      * negative values.
      */
     public Token lexNumber() {
-        if (peek("-", "0") || peek("+", "0"))
-            throw new ParseException("-0, +0 not allowed", chars.index);
-
         if (peek("[+-]"))
             match("[+-]");
 
