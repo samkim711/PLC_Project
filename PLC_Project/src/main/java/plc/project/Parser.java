@@ -3,6 +3,8 @@ package plc.project;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
@@ -56,6 +58,7 @@ public final class Parser {
             throw new ParseException("Expected identifier", tokens.index);
         }
         identifier = tokens.get(0).getLiteral();
+        tokens.advance();
 
         Optional<Ast.Expression> expression = Optional.empty();
         if (match("=")) expression = Optional.of(parseExpression());
@@ -83,17 +86,20 @@ public final class Parser {
             throw new ParseException("Expected identifier", tokens.index);
         }
         identifier = tokens.get(0).getLiteral();
+        tokens.advance();
 
         // match (
-        if (!match(";")) throw new ParseException("Expected '('", tokens.index);
+        if (!match("(")) throw new ParseException("Expected '('", tokens.index);
 
         List<String> parameters = new ArrayList<>();
         if (!peek(")")){
             if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
             parameters.add(tokens.get(0).getLiteral());
+            tokens.advance();
             while(match(",")){
                 if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
                 parameters.add(tokens.get(0).getLiteral());
+                tokens.advance();
             }
         }
 
@@ -336,7 +342,27 @@ public final class Parser {
      * Parses the {@code secondary-expression} rule.
      */
     public Ast.Expression parseSecondaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression primaryExpression = parsePrimaryExpression();
+        while (peek(".")){
+            match(".");
+            if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
+            String identifier = tokens.get(0).getLiteral();
+            if (peek("(")){
+                match('(');
+                List<Ast.Expression> parameters = new ArrayList<>();
+                if (!peek(")")) {
+                    parameters.add(parseExpression());
+                    while (match(",")) {
+                        parameters.add(parseExpression());
+                    }
+                }
+                if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
+                primaryExpression = new Ast.Expression.Function(Optional.of(primaryExpression), identifier, parameters);
+            }
+            else primaryExpression = new Ast.Expression.Access(Optional.of(primaryExpression), identifier);
+        }
+
+        return primaryExpression;
     }
 
     /**
@@ -346,7 +372,58 @@ public final class Parser {
      * not strictly necessary.
      */
     public Ast.Expression parsePrimaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("NIL")){
+            return new Ast.Expression.Literal(null);
+        }
+        else if (match("TRUE")){
+            return new Ast.Expression.Literal(Boolean.TRUE);
+        }
+        else if (match("FALSE")){
+            return new Ast.Expression.Literal(Boolean.FALSE);
+        }
+        else if (peek(Token.Type.INTEGER)){
+            Token token = tokens.get(0);
+            tokens.advance();
+            return new Ast.Expression.Literal(new BigInteger(token.getLiteral()));        }
+        else if (peek(Token.Type.DECIMAL)){
+            Token token = tokens.get(0);
+            tokens.advance();
+            return new Ast.Expression.Literal(new BigDecimal(token.getLiteral()));        }
+        else if (peek(Token.Type.CHARACTER)){
+            Token token = tokens.get(0);
+            tokens.advance();
+            return new Ast.Expression.Literal(token.getLiteral().charAt(1));        }
+        else if (peek(Token.Type.STRING)){
+            Token token = tokens.get(0);
+            tokens.advance();
+            String literal = token.getLiteral();
+            return new Ast.Expression.Literal(literal.substring(1, literal.length() - 1));
+        }
+        else if (match("(")){
+            Ast.Expression expression = parseExpression();
+            if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
+            return new Ast.Expression.Group(expression);
+        }
+        else if (peek(Token.Type.IDENTIFIER)) {
+            String identifier = tokens.get(0).getLiteral();
+            tokens.advance();
+            if (peek("(")){
+                match("(");
+                List<Ast.Expression> parameters = new ArrayList<>();
+                if (!peek(")")) {
+                    parameters.add(parseExpression());
+                    while (match(",")) {
+                        parameters.add(parseExpression());
+                    }
+                }
+                if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
+                return new Ast.Expression.Function(Optional.empty(), identifier, parameters);
+            } else {
+                return new Ast.Expression.Access(Optional.empty(), identifier);
+            }
+        } else {
+            throw new ParseException("Invalid primary expression", tokens.index);
+        }
     }
 
     /**
@@ -369,7 +446,7 @@ public final class Parser {
                     return false;
                 }
             } else if (patterns[i] instanceof String){
-                if (patterns[i].equals(tokens.get(i).getLiteral())){
+                if (!patterns[i].equals(tokens.get(i).getLiteral())){
                     return false;
                 }
             } else {
