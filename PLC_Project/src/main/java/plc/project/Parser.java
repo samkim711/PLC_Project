@@ -3,6 +3,8 @@ package plc.project;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
@@ -83,6 +85,7 @@ public final class Parser {
             throw new ParseException("Expected identifier", tokens.index);
         }
         identifier = tokens.get(0).getLiteral();
+        tokens.advance();
 
         // match (
         if (!match(";")) throw new ParseException("Expected '('", tokens.index);
@@ -91,9 +94,11 @@ public final class Parser {
         if (!peek(")")){
             if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
             parameters.add(tokens.get(0).getLiteral());
+            tokens.advance();
             while(match(",")){
                 if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
                 parameters.add(tokens.get(0).getLiteral());
+                tokens.advance();
             }
         }
 
@@ -376,11 +381,13 @@ public final class Parser {
             return new Ast.Expression.Literal(Boolean.FALSE);
         }
         else if (peek(Token.Type.INTEGER)){
-            return new Ast.Expression.Literal(Integer.parseInt(tokens.get(0).getLiteral()));
-        }
+            Token token = tokens.get(0);
+            tokens.advance();
+            return new Ast.Expression.Literal(new BigInteger(token.getLiteral()));        }
         else if (peek(Token.Type.DECIMAL)){
-            return new Ast.Expression.Literal(Double.parseDouble(tokens.get(0).getLiteral()));
-        }
+            Token token = tokens.get(0);
+            tokens.advance();
+            return new Ast.Expression.Literal(new BigDecimal(token.getLiteral()));        }
         else if (peek(Token.Type.CHARACTER)){
             return new Ast.Expression.Literal(tokens.get(0).getLiteral().charAt(1));
         }
@@ -391,6 +398,7 @@ public final class Parser {
         else if (match("(")){
             Ast.Expression expression = parseExpression();
             if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
+            return new Ast.Expression.Group(expression);
         }
         else {
             if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Either expected identifier or invalid primary expression", tokens.index);
@@ -409,7 +417,6 @@ public final class Parser {
             }
             else return new Ast.Expression.Access(Optional.empty(), identifier);
             }
-        throw new ParseException("Invalid primary expression", tokens.index);
     }
 
     /**
@@ -432,7 +439,7 @@ public final class Parser {
                     return false;
                 }
             } else if (patterns[i] instanceof String){
-                if (patterns[i].equals(tokens.get(i).getLiteral())){
+                if (!patterns[i].equals(tokens.get(i).getLiteral())){
                     return false;
                 }
             } else {
