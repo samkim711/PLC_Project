@@ -336,7 +336,27 @@ public final class Parser {
      * Parses the {@code secondary-expression} rule.
      */
     public Ast.Expression parseSecondaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression primaryExpression = parsePrimaryExpression();
+        while (peek(".")){
+            match(".");
+            if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
+            String identifier = tokens.get(0).getLiteral();
+            if (peek("(")){
+                match('(');
+                List<Ast.Expression> parameters = new ArrayList<>();
+                if (!peek(")")) {
+                    parameters.add(parseExpression());
+                    while (match(",")) {
+                        parameters.add(parseExpression());
+                    }
+                }
+                if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
+                primaryExpression = new Ast.Expression.Function(Optional.of(primaryExpression), identifier, parameters);
+            }
+            else primaryExpression = new Ast.Expression.Access(Optional.of(primaryExpression), identifier);
+        }
+
+        return primaryExpression;
     }
 
     /**
@@ -346,7 +366,50 @@ public final class Parser {
      * not strictly necessary.
      */
     public Ast.Expression parsePrimaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("NIL")){
+            return new Ast.Expression.Literal(null);
+        }
+        else if (match("TRUE")){
+            return new Ast.Expression.Literal(Boolean.TRUE);
+        }
+        else if (match("FALSE")){
+            return new Ast.Expression.Literal(Boolean.FALSE);
+        }
+        else if (peek(Token.Type.INTEGER)){
+            return new Ast.Expression.Literal(Integer.parseInt(tokens.get(0).getLiteral()));
+        }
+        else if (peek(Token.Type.DECIMAL)){
+            return new Ast.Expression.Literal(Double.parseDouble(tokens.get(0).getLiteral()));
+        }
+        else if (peek(Token.Type.CHARACTER)){
+            return new Ast.Expression.Literal(tokens.get(0).getLiteral().charAt(1));
+        }
+        else if (peek(Token.Type.STRING)){
+            String literal = tokens.get(0).getLiteral();
+            return new Ast.Expression.Literal(literal.substring(1, literal.length() - 1));
+        }
+        else if (match("(")){
+            Ast.Expression expression = parseExpression();
+            if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
+        }
+        else {
+            if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Either expected identifier or invalid primary expression", tokens.index);
+            String identifier = tokens.get(0).getLiteral();
+            if (peek("(")){
+                match('(');
+                List<Ast.Expression> parameters = new ArrayList<>();
+                if (!peek(")")) {
+                    parameters.add(parseExpression());
+                    while (match(",")) {
+                        parameters.add(parseExpression());
+                    }
+                }
+                if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
+                return new Ast.Expression.Function(Optional.empty(), identifier, parameters);
+            }
+            else return new Ast.Expression.Access(Optional.empty(), identifier);
+            }
+        throw new ParseException("Invalid primary expression", tokens.index);
     }
 
     /**
