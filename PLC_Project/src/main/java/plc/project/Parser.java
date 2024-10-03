@@ -198,7 +198,42 @@ public final class Parser {
      * {@code FOR}.
      */
     public Ast.Statement.For parseForStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        match("FOR");
+        if (!match("(")) throw new ParseException("Expected '('", tokens.index);
+
+        Ast.Statement.Declaration statmentDeclaration = null;
+        if (!peek(";")){
+            if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
+            String identifier = tokens.get(0).getLiteral();
+            if (!match("=")) throw new ParseException("Expected '='", tokens.index);
+            Ast.Expression value = parseExpression();
+            statmentDeclaration = new Ast.Statement.Declaration(identifier, Optional.of(value));
+        }
+
+        if (!match(";")) throw new ParseException("Expected ';'", tokens.index);
+
+        Ast.Expression conditionExpression = parseExpression();
+
+        if (!match(";")) throw new ParseException("Expected ';'", tokens.index);
+
+        Ast.Statement.Assignment incrementStatement = null;
+        if (!peek(")")){
+            Ast.Expression identifier = parseExpression();
+            if (!match("=")) throw new ParseException("Expected '='", tokens.index);
+            Ast.Expression value = parseExpression();
+            incrementStatement = new Ast.Statement.Assignment(identifier, value);
+
+        }
+
+        if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
+
+        List<Ast.Statement> finalStatements = new ArrayList<>();
+        while (!peek("END")) {
+            finalStatements.add(parseStatement());
+        }
+        if (!match("END")) throw new ParseException("Expected 'END'", tokens.index);
+
+        return new Ast.Statement.For(statmentDeclaration, conditionExpression, incrementStatement, finalStatements);
     }
 
     /**
