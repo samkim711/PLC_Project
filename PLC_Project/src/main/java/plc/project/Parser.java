@@ -276,7 +276,15 @@ public final class Parser {
      * Parses the {@code logical-expression} rule.
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression logicalExpression = parseEqualityExpression();
+        while (peek("&&") || peek("||")){
+            String logicalOperator = tokens.get(0).getLiteral();
+            match(logicalOperator);
+            Ast.Expression tempLogicalExpression = parseEqualityExpression();
+            logicalExpression = new Ast.Expression.Binary(logicalOperator, logicalExpression, tempLogicalExpression);
+        }
+
+        return logicalExpression;
     }
 
     /**
