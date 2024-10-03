@@ -59,7 +59,7 @@ public final class Parser {
 
         Optional<Ast.Expression> expression = Optional.empty();
         if (match("=")) expression = Optional.of(parseExpression());
-        
+
         // match ;
         if (!match(";")) {
             throw new ParseException("Expected \";\"", tokens.index);
@@ -75,7 +75,29 @@ public final class Parser {
      * next tokens start a method, aka {@code DEF}.
      */
     public Ast.Method parseMethod() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        match("DEF");
+
+        // if and identifier is missing throw an exception
+        String identifier;
+        if (!peek(Token.Type.IDENTIFIER)) {
+            throw new ParseException("Expected identifier", tokens.index);
+        }
+        identifier = tokens.get(0).getLiteral();
+
+        // match (
+        if (!match(";")) throw new ParseException("Expected '('", tokens.index);
+
+        List<String> parameters = new ArrayList<>();
+        if (!peek(")")){
+            if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
+            parameters.add(tokens.get(0).getLiteral());
+            while(match(",")){
+                if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
+                parameters.add(tokens.get(0).getLiteral());
+            }
+        }
+
+
     }
 
     /**
