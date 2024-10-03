@@ -306,14 +306,30 @@ public final class Parser {
      * Parses the {@code additive-expression} rule.
      */
     public Ast.Expression parseAdditiveExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression multiExpression = parseMultiplicativeExpression();
+        while (peek("+") || peek("-")){
+            String addOperator = tokens.get(0).getLiteral();
+            match(addOperator);
+            Ast.Expression tempMuliExpression = parseMultiplicativeExpression();
+            multiExpression = new Ast.Expression.Binary(addOperator, multiExpression, tempMuliExpression);
+        }
+
+        return multiExpression;
     }
 
     /**
      * Parses the {@code multiplicative-expression} rule.
      */
     public Ast.Expression parseMultiplicativeExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression secondExpression = parseSecondaryExpression();
+        while (peek("*") || peek("/")){
+            String secondOperator = tokens.get(0).getLiteral();
+            match(secondOperator);
+            Ast.Expression tempSecondExpression = parseSecondaryExpression();
+            secondExpression = new Ast.Expression.Binary(secondOperator, secondExpression, tempSecondExpression);
+        }
+
+        return secondExpression;
     }
 
     /**
