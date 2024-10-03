@@ -276,28 +276,60 @@ public final class Parser {
      * Parses the {@code logical-expression} rule.
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression logicalExpression = parseEqualityExpression();
+        while (peek("&&") || peek("||")){
+            String logicalOperator = tokens.get(0).getLiteral();
+            match(logicalOperator);
+            Ast.Expression tempLogicalExpression = parseEqualityExpression();
+            logicalExpression = new Ast.Expression.Binary(logicalOperator, logicalExpression, tempLogicalExpression);
+        }
+
+        return logicalExpression;
     }
 
     /**
      * Parses the {@code equality-expression} rule.
      */
     public Ast.Expression parseEqualityExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression additiveExpression = parseAdditiveExpression();
+        while (peek("<") || peek("<=") || peek(">") || peek(">=") || peek("==") || peek("!=")){
+            String additiveOperator = tokens.get(0).getLiteral();
+            match(additiveOperator);
+            Ast.Expression tempAdditiveExpression = parseAdditiveExpression();
+            additiveExpression = new Ast.Expression.Binary(additiveOperator, additiveExpression, tempAdditiveExpression);
+        }
+
+        return additiveExpression;
     }
 
     /**
      * Parses the {@code additive-expression} rule.
      */
     public Ast.Expression parseAdditiveExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression multiExpression = parseMultiplicativeExpression();
+        while (peek("+") || peek("-")){
+            String addOperator = tokens.get(0).getLiteral();
+            match(addOperator);
+            Ast.Expression tempMuliExpression = parseMultiplicativeExpression();
+            multiExpression = new Ast.Expression.Binary(addOperator, multiExpression, tempMuliExpression);
+        }
+
+        return multiExpression;
     }
 
     /**
      * Parses the {@code multiplicative-expression} rule.
      */
     public Ast.Expression parseMultiplicativeExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression secondExpression = parseSecondaryExpression();
+        while (peek("*") || peek("/")){
+            String secondOperator = tokens.get(0).getLiteral();
+            match(secondOperator);
+            Ast.Expression tempSecondExpression = parseSecondaryExpression();
+            secondExpression = new Ast.Expression.Binary(secondOperator, secondExpression, tempSecondExpression);
+        }
+
+        return secondExpression;
     }
 
     /**
