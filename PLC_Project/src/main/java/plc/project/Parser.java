@@ -242,7 +242,15 @@ public final class Parser {
      * {@code WHILE}.
      */
     public Ast.Statement.While parseWhileStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        match("WHILE");
+        Ast.Expression conditionExpression = parseExpression();
+        if (!match("DO")) throw new ParseException("Expected 'DO'", tokens.index);
+        List<Ast.Statement> statements = new ArrayList<>();
+        while (!peek("END")) {
+            statements.add(parseStatement());
+        }
+        if (!match("END")) throw new ParseException("Expected 'END'", tokens.index);
+        return new Ast.Statement.While(conditionExpression, statements);
     }
 
     /**
@@ -251,7 +259,10 @@ public final class Parser {
      * {@code RETURN}.
      */
     public Ast.Statement.Return parseReturnStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        match("RETURN");
+        Ast.Expression expression = parseExpression();
+        if (!match(";")) throw new ParseException("Expected ';'", tokens.index);
+        return new Ast.Statement.Return(expression);
     }
 
     /**
