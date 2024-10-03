@@ -1,6 +1,8 @@
 package plc.project;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Optional;
 
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
@@ -27,7 +29,18 @@ public final class Parser {
      * Parses the {@code source} rule.
      */
     public Ast.Source parseSource() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        List<Ast.Field> fields = new ArrayList<>();
+        List<Ast.Method> methods = new ArrayList<>();
+
+        while (peek("LET")) {
+            fields.add(parseField());
+        }
+
+        while (peek("DEF")) {
+            methods.add(parseMethod());
+        }
+
+        return new Ast.Source(fields, methods);
     }
 
     /**
@@ -35,7 +48,26 @@ public final class Parser {
      * next tokens start a field, aka {@code LET}.
      */
     public Ast.Field parseField() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        match("LET"); // match LET
+        boolean constPresent = match("CONST"); // match potential CONST
+        String identifier;
+        // if and identifier is missing throw an exception
+        if (!peek(Token.Type.IDENTIFIER)) {
+            throw new ParseException("Expected identifier", tokens.index);
+        }
+        identifier = tokens.get(0).getLiteral();
+
+        Optional<Ast.Expression> expression = Optional.empty();
+        if (match("=")) expression = Optional.of(parseExpression());
+        
+        // match ;
+        if (!match(";")) {
+            throw new ParseException("Expected \";\"", tokens.index);
+        }
+
+        return new Ast.Field(identifier, constPresent, expression);
+
+
     }
 
     /**
