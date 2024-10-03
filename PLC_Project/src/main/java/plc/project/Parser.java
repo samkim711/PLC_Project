@@ -97,7 +97,20 @@ public final class Parser {
             }
         }
 
+        // match )
+        if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
+        // match DO
+        if (!match("DO")) throw new ParseException("Expected 'DO'", tokens.index);
 
+        List<Ast.Statement> statements = new ArrayList<>();
+        while (!peek("END")) {
+            statements.add(parseStatement());
+        }
+
+        // match END
+        if (!match("END")) throw new ParseException("Expected 'DO'", tokens.index);
+
+        return new Ast.Method(identifier, parameters, statements);
     }
 
     /**
@@ -106,7 +119,31 @@ public final class Parser {
      * statement, then it is an expression/assignment statement.
      */
     public Ast.Statement parseStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (peek("LET")){
+            return parseDeclarationStatement();
+        }
+        else if (peek("IF")){
+            return parseIfStatement();
+        }
+        else if (peek("FOR")){
+            return parseForStatement();
+        }
+        else if (peek("WHILE")){
+            return parseWhileStatement();
+        }
+        else if (peek("RETURN")){
+            return parseReturnStatement();
+        }
+        else {
+            Ast.Expression expression = parseExpression();
+            if (!match("=")){
+                if (!match(";")) throw new ParseException("Expected ';'", tokens.index);
+                return new Ast.Statement.Expression(expression);
+            }
+            Ast.Expression value = parseExpression();
+            if (!match(";")) throw new ParseException("Expected ';'", tokens.index);
+            return new Ast.Statement.Assignment(expression, value);
+        }
     }
 
     /**
