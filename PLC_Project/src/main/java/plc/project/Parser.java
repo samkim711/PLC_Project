@@ -114,7 +114,7 @@ public final class Parser {
         }
 
         // match END
-        if (!match("END")) throw new ParseException("Expected 'DO'", tokens.index);
+        if (!match("END")) throw new ParseException("Expected 'END'", tokens.index);
 
         return new Ast.Method(identifier, parameters, statements);
     }
@@ -161,6 +161,7 @@ public final class Parser {
         match("LET");
         if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
         String identifier = tokens.get(0).getLiteral();
+        tokens.advance();
 
         Optional<Ast.Expression> value = Optional.empty();
         if (match("=")){
@@ -211,6 +212,7 @@ public final class Parser {
         if (!peek(";")){
             if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
             String identifier = tokens.get(0).getLiteral();
+            tokens.advance();
             if (!match("=")) throw new ParseException("Expected '='", tokens.index);
             Ast.Expression value = parseExpression();
             statmentDeclaration = new Ast.Statement.Declaration(identifier, Optional.of(value));
@@ -347,8 +349,9 @@ public final class Parser {
             match(".");
             if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
             String identifier = tokens.get(0).getLiteral();
+            tokens.advance();
             if (peek("(")){
-                match('(');
+                match(")");
                 List<Ast.Expression> parameters = new ArrayList<>();
                 if (!peek(")")) {
                     parameters.add(parseExpression());
