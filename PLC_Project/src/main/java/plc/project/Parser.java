@@ -152,7 +152,17 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        match("LET");
+        if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.index);
+        String identifier = tokens.get(0).getLiteral();
+
+        Optional<Ast.Expression> value = Optional.empty();
+        if (match("=")){
+            value = Optional.of(parseExpression());
+        }
+        if (!match(";")) throw new ParseException("Expected ';'", tokens.index);
+        
+        return new Ast.Statement.Declaration(identifier, value);
     }
 
     /**
