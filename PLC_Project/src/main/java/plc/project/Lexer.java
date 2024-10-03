@@ -31,15 +31,14 @@ public final class Lexer {
     public List<Token> lex() {
         List<Token> tokens = new ArrayList<>();
         while (chars.has(0)) {
-
             while (chars.has(0) && peek("[ \b\n\r\t]")) {
                 match("[ \b\n\r\t]");
                 chars.skip();
             }
-            // If there's still input left, lex the next token
-            if (chars.has(0)) {
+
+            if (chars.has(0)) { // has character left
                 //System.out.println(chars.index);
-                tokens.add(lexToken());
+                tokens.add(lexToken()); // next token
             }
         }
         return tokens;
@@ -54,16 +53,17 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        if (peek("[A-Za-z_]")) { // Identifier starts with a letter or underscore
+        if (peek("[A-Za-z_]")) { // letter of underscore then identifier
             return lexIdentifier();
-        } else if (peek("[+-]") || peek("[0-9]")) { // Integer or Decimal starts with a digit or plus/minus
+        } else if (peek("[+-]") || peek("[0-9]")) { // starts with integer or +-
             return lexNumber();
-        } else if (peek("'")) { // Character starts with a single quote
+        } else if (peek("'")) { // starts with single quote
             return lexCharacter();
-        } else if (peek("\"")) { // String starts with a double quote
+        } else if (peek("\"")) { // starts with a double quote
             return lexString();
-        } else {
-            return lexOperator(); // Any other single character is an operator
+        }
+        else {
+            return lexOperator(); // anything else is an operator
         }
     }
 
