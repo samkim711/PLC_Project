@@ -291,7 +291,15 @@ public final class Parser {
      * Parses the {@code equality-expression} rule.
      */
     public Ast.Expression parseEqualityExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression additiveExpression = parseAdditiveExpression();
+        while (peek("<") || peek("<=") || peek(">") || peek(">=") || peek("==") || peek("!=")){
+            String additiveOperator = tokens.get(0).getLiteral();
+            match(additiveOperator);
+            Ast.Expression tempAdditiveExpression = parseAdditiveExpression();
+            additiveExpression = new Ast.Expression.Binary(additiveOperator, additiveExpression, tempAdditiveExpression);
+        }
+
+        return additiveExpression;
     }
 
     /**
