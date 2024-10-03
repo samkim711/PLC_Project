@@ -161,7 +161,7 @@ public final class Parser {
             value = Optional.of(parseExpression());
         }
         if (!match(";")) throw new ParseException("Expected ';'", tokens.index);
-        
+
         return new Ast.Statement.Declaration(identifier, value);
     }
 
@@ -171,7 +171,25 @@ public final class Parser {
      * {@code IF}.
      */
     public Ast.Statement.If parseIfStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        match("IF");
+        Ast.Expression expression = parseExpression();
+        if (!match("DO")) throw new ParseException("Expected 'DO'", tokens.index);
+
+        List<Ast.Statement> thenStatements = new ArrayList<>();
+        while (!peek("ELSE") && !peek("END")) {
+            thenStatements.add(parseStatement());
+        }
+
+        List<Ast.Statement> elseStatements = new ArrayList<>();
+        if (match("ELSE")) {
+            while (!peek("END")) {
+                elseStatements.add(parseStatement());
+            }
+        }
+
+        if (!match("END")) throw new ParseException("Expected 'END'", tokens.index);
+
+        return new Ast.Statement.If(expression, thenStatements, elseStatements);
     }
 
     /**
