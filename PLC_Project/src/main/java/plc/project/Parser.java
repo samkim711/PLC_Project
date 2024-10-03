@@ -58,6 +58,7 @@ public final class Parser {
             throw new ParseException("Expected identifier", tokens.index);
         }
         identifier = tokens.get(0).getLiteral();
+        tokens.advance();
 
         Optional<Ast.Expression> expression = Optional.empty();
         if (match("=")) expression = Optional.of(parseExpression());
@@ -88,7 +89,7 @@ public final class Parser {
         tokens.advance();
 
         // match (
-        if (!match(";")) throw new ParseException("Expected '('", tokens.index);
+        if (!match("(")) throw new ParseException("Expected '('", tokens.index);
 
         List<String> parameters = new ArrayList<>();
         if (!peek(")")){
@@ -389,10 +390,13 @@ public final class Parser {
             tokens.advance();
             return new Ast.Expression.Literal(new BigDecimal(token.getLiteral()));        }
         else if (peek(Token.Type.CHARACTER)){
-            return new Ast.Expression.Literal(tokens.get(0).getLiteral().charAt(1));
-        }
+            Token token = tokens.get(0);
+            tokens.advance();
+            return new Ast.Expression.Literal(token.getLiteral().charAt(1));        }
         else if (peek(Token.Type.STRING)){
-            String literal = tokens.get(0).getLiteral();
+            Token token = tokens.get(0);
+            tokens.advance();
+            String literal = token.getLiteral();
             return new Ast.Expression.Literal(literal.substring(1, literal.length() - 1));
         }
         else if (match("(")){
@@ -400,11 +404,11 @@ public final class Parser {
             if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
             return new Ast.Expression.Group(expression);
         }
-        else {
-            if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Either expected identifier or invalid primary expression", tokens.index);
+        else if (peek(Token.Type.IDENTIFIER)) {
             String identifier = tokens.get(0).getLiteral();
+            tokens.advance();
             if (peek("(")){
-                match('(');
+                match("(");
                 List<Ast.Expression> parameters = new ArrayList<>();
                 if (!peek(")")) {
                     parameters.add(parseExpression());
@@ -414,9 +418,12 @@ public final class Parser {
                 }
                 if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
                 return new Ast.Expression.Function(Optional.empty(), identifier, parameters);
+            } else {
+                return new Ast.Expression.Access(Optional.empty(), identifier);
             }
-            else return new Ast.Expression.Access(Optional.empty(), identifier);
-            }
+        } else {
+            throw new ParseException("Invalid primary expression", tokens.index);
+        }
     }
 
     /**
