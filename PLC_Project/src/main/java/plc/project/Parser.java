@@ -1,5 +1,6 @@
 package plc.project;
 
+import java.text.ParseException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -114,7 +115,7 @@ public final class Parser {
         }
 
         // match END
-        if (!match("END")) throw new ParseException("Expected 'DO'", tokens.index);
+        if (!match("END")) throw new ParseException("Expected 'END'", tokens.index);
 
         return new Ast.Method(identifier, parameters, statements);
     }
@@ -389,18 +390,38 @@ public final class Parser {
             Token token = tokens.get(0);
             tokens.advance();
             return new Ast.Expression.Literal(new BigDecimal(token.getLiteral()));        }
-        else if (peek(Token.Type.CHARACTER)){
+        else if (peek(Token.Type.CHARACTER)) {
             Token token = tokens.get(0);
             tokens.advance();
-            return new Ast.Expression.Literal(token.getLiteral().charAt(1));        }
+            String literal = token.getLiteral();
+            literal = literal
+                    .replace("\\b", "\b")  // Backspace
+                    .replace("\\n", "\n")  // Newline
+                    .replace("\\r", "\r")  // Carriage return
+                    .replace("\\t", "\t")  // Tab
+                    .replace("\\\"", "\"")  // Escaped double-quote
+                    .replace("\\'", "'")    // Escaped single-quote
+                    .replace("\\\\", "\\"); // Escaped backslash
+            return new Ast.Expression.Literal(token.getLiteral().charAt(1));
+        }
         else if (peek(Token.Type.STRING)){
             Token token = tokens.get(0);
             tokens.advance();
             String literal = token.getLiteral();
+            //System.out.println(literal.substring(1, literal.length() - 1));
+            literal = literal
+                    .replace("\\b", "\b")  // Backspace
+                    .replace("\\n", "\n")  // Newline
+                    .replace("\\r", "\r")  // Carriage return
+                    .replace("\\t", "\t")  // Tab
+                    .replace("\\\"", "\"")  // Escaped double-quote
+                    .replace("\\'", "'")    // Escaped single-quote
+                    .replace("\\\\", "\\"); // Escaped backslash
             return new Ast.Expression.Literal(literal.substring(1, literal.length() - 1));
         }
         else if (match("(")){
             Ast.Expression expression = parseExpression();
+
             if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
             return new Ast.Expression.Group(expression);
         }
@@ -412,16 +433,24 @@ public final class Parser {
                 List<Ast.Expression> parameters = new ArrayList<>();
                 if (!peek(")")) {
                     parameters.add(parseExpression());
-                    while (match(",")) {
+                    while (peek(",")) {
+                        match(",");
                         parameters.add(parseExpression());
                     }
                 }
-                if (!match(")")) throw new ParseException("Expected ')'", tokens.index);
+
+                if (!match(")")) {
+                    System.out.println(tokens.index);
+                    throw new ParseException("Expected ')'", tokens.index);
+                }
                 return new Ast.Expression.Function(Optional.empty(), identifier, parameters);
-            } else {
+            }
+            else {
                 return new Ast.Expression.Access(Optional.empty(), identifier);
             }
-        } else {
+        }
+        else {
+            //asdf
             throw new ParseException("Invalid primary expression", tokens.index);
         }
     }
@@ -500,6 +529,9 @@ public final class Parser {
             index++;
         }
 
+        public boolean isEmpty() {
+            return !has(1);
+        }
     }
 
 }
