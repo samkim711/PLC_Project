@@ -160,6 +160,7 @@ public final class Parser {
         match("LET");
         if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.getIndex());
         String identifier = tokens.get(0).getLiteral();
+        tokens.advance();
 
         Optional<Ast.Expression> value = Optional.empty();
         if (match("=")){
@@ -210,6 +211,7 @@ public final class Parser {
         if (!peek(";")){
             if (!peek(Token.Type.IDENTIFIER)) throw new ParseException("Expected identifier", tokens.getIndex());
             String identifier = tokens.get(0).getLiteral();
+            tokens.advance();
             if (!match("=")) throw new ParseException("Expected '='", tokens.getIndex());
             Ast.Expression value = parseExpression();
             statmentDeclaration = new Ast.Statement.Declaration(identifier, Optional.of(value));
