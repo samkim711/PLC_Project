@@ -1,5 +1,7 @@
 package plc.project;
-
+import java.util.Collections.*;
+import java.util.List;
+import java.util.ArrayList;
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     private Scope scope = new Scope(null);
@@ -18,7 +20,22 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Source ast) {
-        throw new UnsupportedOperationException(); //TODO
+        // First, declare globals (fields), then declare functions (methods)
+        for (Ast.Field field : ast.getFields()) {
+            visit(field);
+        }
+        for (Ast.Method method : ast.getMethods()) {
+            visit(method);
+        }
+
+        // Retrieve the function from the scope
+        Environment.Function mainFunction = scope.lookupFunction("main", 0);
+
+        // Invoke the function with an empty list of arguments to get the result
+        List<Environment.PlcObject> list = new ArrayList<>();
+        Environment.PlcObject result = mainFunction.invoke(list);
+
+        return result;
     }
 
     @Override
