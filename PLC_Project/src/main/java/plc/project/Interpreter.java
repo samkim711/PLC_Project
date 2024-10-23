@@ -85,7 +85,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Statement.Assignment ast) {
         if (ast.getReceiver() instanceof Ast.Expression.Access){
-            // TODO
+            //TODO
         }
         else throw new RuntimeException("Not Access Type");
         return Environment.NIL;
