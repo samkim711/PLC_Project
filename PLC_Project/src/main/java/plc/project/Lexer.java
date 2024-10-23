@@ -31,15 +31,14 @@ public final class Lexer {
     public List<Token> lex() {
         List<Token> tokens = new ArrayList<>();
         while (chars.has(0)) {
-
-            while (chars.has(0) && peek(" ")) {
-                match(" ");
+            while (chars.has(0) && peek("[ \b\n\r\t]")) {
+                match("[ \b\n\r\t]");
                 chars.skip();
             }
-            // If there's still input left, lex the next token
-            if (chars.has(0)) {
+
+            if (chars.has(0)) { // has character left
                 //System.out.println(chars.index);
-                tokens.add(lexToken());
+                tokens.add(lexToken()); // next token
             }
         }
         return tokens;
@@ -54,16 +53,17 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        if (peek("[A-Za-z_]")) { // Identifier starts with a letter or underscore
+        if (peek("[A-Za-z_]")) { // letter of underscore then identifier
             return lexIdentifier();
-        } else if (peek("[+-]") || peek("[0-9]")) { // Integer or Decimal starts with a digit or plus/minus
+        } else if (peek("[+-]") || peek("[0-9]")) { // starts with integer or +-
             return lexNumber();
-        } else if (peek("'")) { // Character starts with a single quote
+        } else if (peek("'")) { // starts with single quote
             return lexCharacter();
-        } else if (peek("\"")) { // String starts with a double quote
+        } else if (peek("\"")) { // starts with a double quote
             return lexString();
-        } else {
-            return lexOperator(); // Any other single character is an operator
+        }
+        else {
+            return lexOperator(); // anything else is an operator
         }
     }
 
@@ -87,24 +87,36 @@ public final class Lexer {
      * negative values.
      */
     public Token lexNumber() {
-        if (peek("[+-]"))
+        int leadingSymbolIncrement = 0;
+        if (peek("[+-]")){
             match("[+-]");
-
-        boolean startZero = false;
-        if (peek("0")) {
-            peek("0");
-            startZero = true;
+            leadingSymbolIncrement = 1;
+            if (!peek("[0-9]"))
+                return chars.emit(Token.Type.OPERATOR);
         }
 
-        // Integer part
+        // Check if the next character is a digit
         if (!peek("[0-9]")) {
             throw new ParseException("Expected digit", chars.index);
         }
-        while (peek("[1-9]")) {
-            match("[1-9]");
+
+        // Check for leading zero
+        boolean startZero = peek("0");
+
+        // Integer part
+        while (peek("[0-9]")) {
+            match("[0-9]");
         }
 
-        // Check for decimal point
+        // If number has leading zero and is more than one digit, throw exception
+        if (startZero && chars.length - leadingSymbolIncrement > 1) {
+            throw new ParseException("Leading zeros are not allowed", chars.index - chars.length);
+        }
+        if (startZero && leadingSymbolIncrement==1 && chars.length - leadingSymbolIncrement == 1) {
+            throw new ParseException("+0 and -0 are not valid integers", chars.index - chars.length - leadingSymbolIncrement);
+        }
+
+        // Check for decimal point and fractional part
         if (peek("\\.")) {
             match("\\.");
             if (!peek("[0-9]")) {
@@ -115,8 +127,7 @@ public final class Lexer {
             }
             return chars.emit(Token.Type.DECIMAL);
         }
-        if (startZero)
-            throw new ParseException("Starting Zero not allowed", chars.index);
+
         return chars.emit(Token.Type.INTEGER);
     }
 

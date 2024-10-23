@@ -13,7 +13,6 @@ public class LexerTests {
     void testIdentifier(String test, String input, boolean success) {
         test(input, Token.Type.IDENTIFIER, success);
     }
-
     private static Stream<Arguments> testIdentifier() {
         return Stream.of(
                 Arguments.of("Alphabetic", "getName", true),
@@ -22,13 +21,11 @@ public class LexerTests {
                 Arguments.of("Leading Digit", "1fish2fish3fishbluefish", false)
         );
     }
-
     @ParameterizedTest
     @MethodSource
     void testInteger(String test, String input, boolean success) {
         test(input, Token.Type.INTEGER, success);
     }
-
     private static Stream<Arguments> testInteger() {
         return Stream.of(
                 Arguments.of("Single Digit", "1", true),
@@ -37,13 +34,11 @@ public class LexerTests {
                 Arguments.of("Leading Zero", "01", false)
         );
     }
-
     @ParameterizedTest
     @MethodSource
     void testDecimal(String test, String input, boolean success) {
         test(input, Token.Type.DECIMAL, success);
     }
-
     private static Stream<Arguments> testDecimal() {
         return Stream.of(
                 Arguments.of("Multiple Digits", "123.456", true),
@@ -52,13 +47,11 @@ public class LexerTests {
                 Arguments.of("Leading Decimal", ".5", false)
         );
     }
-
     @ParameterizedTest
     @MethodSource
     void testCharacter(String test, String input, boolean success) {
         test(input, Token.Type.CHARACTER, success);
     }
-
     private static Stream<Arguments> testCharacter() {
         return Stream.of(
                 Arguments.of("Alphabetic", "\'c\'", true),
@@ -67,13 +60,11 @@ public class LexerTests {
                 Arguments.of("Multiple", "\'abc\'", false)
         );
     }
-
     @ParameterizedTest
     @MethodSource
     void testString(String test, String input, boolean success) {
         test(input, Token.Type.STRING, success);
     }
-
     private static Stream<Arguments> testString() {
         return Stream.of(
                 Arguments.of("Empty", "\"\"", true),
@@ -83,7 +74,6 @@ public class LexerTests {
                 Arguments.of("Invalid Escape", "\"invalid\\escape\"", false)
         );
     }
-
     @ParameterizedTest
     @MethodSource
     void testOperator(String test, String input, boolean success) {
@@ -91,7 +81,6 @@ public class LexerTests {
                 test(input, Arrays.asList(new Token(Token.Type.OPERATOR, input, 0)),
                         success);
     }
-
     private static Stream<Arguments> testOperator() {
         return Stream.of(
                 Arguments.of("Character", "(", true),
@@ -100,13 +89,11 @@ public class LexerTests {
                 Arguments.of("Tab", "\t", false)
         );
     }
-
     @ParameterizedTest
     @MethodSource
     void testExamples(String test, String input, List<Token> expected) {
         test(input, expected, true);
     }
-
     private static Stream<Arguments> testExamples() {
         return Stream.of(
                 Arguments.of("Example 1", "LET x = 5;", Arrays.asList(
@@ -126,14 +113,12 @@ public class LexerTests {
                         ))
         );
     }
-
     @Test
     void testException() {
         ParseException exception = Assertions.assertThrows(ParseException.class,
                 () -> new Lexer("\"unterminated").lex());
         Assertions.assertEquals(13, exception.getIndex());
     }
-
     /**
      * Tests that lexing the input through {@link Lexer#lexToken()} produces a
      * single token with the expected type and literal matching the input.
@@ -151,7 +136,6 @@ public class LexerTests {
             Assertions.assertFalse(success, e.getMessage());
         }
     }
-
     /**
      * Tests that lexing the input through {@link Lexer#lex()} matches the
      * expected token list.
