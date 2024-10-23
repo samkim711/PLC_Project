@@ -32,34 +32,63 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         Environment.Function mainFunction = scope.lookupFunction("main", 0);
 
         // Invoke the function with an empty list of arguments to get the result
-        List<Environment.PlcObject> args = new ArrayList<Environment.PlcObject>();
-
-        return mainFunction.invoke(args);
+        return mainFunction.invoke(new ArrayList<>());
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Field ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Environment.PlcObject val = Environment.NIL;
+        if (ast.getValue().isPresent()) val = visit(ast.getValue().get());
+        scope.defineVariable(ast.getName(), ast.getConstant(), val);
+
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
-        throw new UnsupportedOperationException(); //TODO
+        // define function that will be called later
+        scope.defineFunction(ast.getName(), ast.getParameters().size(), args->{
+            // create scope
+            scope = new Scope(scope);
+
+            // define parameters as variables
+            for (int i = 0; i < ast.getParameters().size(); i++) {
+                scope.defineVariable(ast.getParameters().get(i), false, args.get(i));
+            }
+
+            // run function
+            try {
+                for (Ast.Statement statement: ast.getStatements()) visit(statement);
+                return Environment.NIL;
+            }
+            catch (Return r) {return r.value;} // handle return values
+            finally {scope = scope.getParent();} // restore original scope
+        });
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Expression ast) {
-        throw new UnsupportedOperationException(); //TODO
+        visit(ast.getExpression());
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Declaration ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Environment.PlcObject val = Environment.NIL;
+        if (ast.getValue().isPresent()) val = visit(ast.getValue().get());
+        scope.defineVariable(ast.getName(), false, val);
+
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Assignment ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (ast.getReceiver() instanceof Ast.Expression.Access){
+            // TODO
+        }
+        else throw new RuntimeException("Not Access Type");
+        return Environment.NIL;
     }
 
     @Override
@@ -79,17 +108,18 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Return ast) {
-        throw new UnsupportedOperationException(); //TODO
+        throw new Return(visit(ast.getValue()));
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Literal ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (ast.getLiteral() == null) return Environment.NIL;
+        return Environment.create(ast.getLiteral());
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Group ast) {
-        throw new UnsupportedOperationException(); //TODO
+        return visit(ast.getExpression());
     }
 
     @Override
@@ -99,7 +129,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Access ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if (ast.getReceiver().isPresent()) return visit(ast.getReceiver().get()).getField(ast.getName()).getValue();
+        return scope.lookupVariable(ast.getName()).getValue();
     }
 
     @Override
